@@ -23,13 +23,14 @@
     </div>
 
     <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+    
     <df-messenger
       chat-title="ResRec_Bot"
       agent-id="4c551376-ced2-4df3-b4d5-7c5e99ca7034"
       project-id="hotel-booking-gneg"
       location="global" 
-      language-code="en">
-    </df-messenger>
+      language-code="en"
+      expand="true"> </df-messenger>
 
     <script>
         const micBtn = document.getElementById('mic-btn');
@@ -63,7 +64,9 @@
                 // Send text to Dialogflow Messenger
                 const dfMessenger = document.querySelector('df-messenger');
                 dfMessenger.renderCustomText(transcript, false);
-                dfMessenger.setAttribute('expand', true);
+                
+                // FIXED: Use a string 'true' instead of boolean true
+                dfMessenger.setAttribute('expand', 'true');
             };
 
             recognition.onerror = (event) => {
@@ -74,7 +77,10 @@
             recognition.onend = () => {
                 micBtn.classList.remove('listening');
                 micBtn.innerText = "Start Speaking 🎤";
-                if(statusText.innerText.includes("listening")) statusText.innerText = "Status: Ready";
+                // Only reset status if it hasn't shown an error
+                if(statusText.innerText.includes("listening")) {
+                    statusText.innerText = "Status: Ready";
+                }
             };
         }
     </script>
