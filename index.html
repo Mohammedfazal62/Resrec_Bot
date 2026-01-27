@@ -63,7 +63,8 @@
                 
                 // Send text to Dialogflow Messenger
                 const dfMessenger = document.querySelector('df-messenger');
-                dfMessenger.renderCustomText(transcript);
+                dfMessenger.renderCustomText(transcript, false);
+                dfMessenger.setAttribute('expand', true);
             };
 
             recognition.onerror = (event) => {
