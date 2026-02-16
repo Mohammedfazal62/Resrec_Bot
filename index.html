@@ -1,87 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Berlin Food Voice Assistant</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; text-align: center; padding-top: 50px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        #mic-btn { background-color: #007bff; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; transition: background 0.3s; margin-top: 20px; }
-        #mic-btn:hover { background-color: #0056b3; }
-        #mic-btn.listening { background-color: #dc3545; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        #status { margin-top: 15px; color: #555; font-style: italic; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ResRec — Restaurant Recommendation Assistant</title>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    background: #0f0f0f;
+    color: white;
+}
+
+header {
+    text-align: center;
+    padding: 40px 20px;
+    border-bottom: 1px solid #333;
+}
+
+header h1 {
+    font-size: 42px;
+    letter-spacing: 2px;
+    color: #d4af37;
+    margin: 0;
+}
+
+header p {
+    color: #bbb;
+    margin-top: 10px;
+}
+
+.container {
+    width: 80%;
+    max-width: 900px;
+    margin: 40px auto;
+}
+
+#chat {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 20px;
+    height: 420px;
+    overflow-y: auto;
+    box-shadow: 0 0 25px rgba(0,0,0,0.5);
+}
+
+.message {
+    margin: 12px 0;
+    line-height: 1.6;
+}
+
+.user {
+    color: #8ab4f8;
+}
+
+.bot {
+    color: #d4af37;
+}
+
+#micBtn {
+    display: block;
+    margin: 25px auto;
+    padding: 18px 32px;
+    font-size: 18px;
+    border-radius: 30px;
+    border: none;
+    background: #d4af37;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#micBtn:hover {
+    background: #b8962e;
+}
+
+#status {
+    text-align: center;
+    color: #aaa;
+    margin-top: 10px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    border-top: 1px solid #333;
+    margin-top: 40px;
+}
+
+</style>
 </head>
+
 <body>
 
-    <div class="container">
-        <h1>Berlin Restaurant Guide 🥨</h1>
-        <p>Your AI assistant is ready. Click the button below to speak!</p>
-        <button id="mic-btn">Start Speaking 🎤</button>
-        <p id="status">Status: Ready</p>
-    </div>
+<header>
+    <h1>ResRec</h1>
+    <p>Your Personal Restaurant Recommendation Assistant</p>
+</header>
 
-    <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-    
-    <df-messenger
-      chat-title="ResRec_Bot"
-      agent-id="4c551376-ced2-4df3-b4d5-7c5e99ca7034"
-      language-code="en"
-      expand="true"> </df-messenger>
+<div class="container">
 
-    <script>
-        const micBtn = document.getElementById('mic-btn');
-        const statusText = document.getElementById('status');
-        
-        // Check browser support for Speech Recognition
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            statusText.innerText = "Error: Your browser does not support Speech Recognition.";
-            micBtn.style.display = 'none';
-        } else {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'en-US';
+    <div id="chat"></div>
 
-            micBtn.addEventListener('click', () => {
-                recognition.start();
-            });
+    <button id="micBtn">🎤 Speak to ResRec</button>
+    <div id="status">Click the microphone and start speaking</div>
 
-            recognition.onstart = () => {
-                micBtn.classList.add('listening');
-                micBtn.innerText = "Listening...";
-                statusText.innerText = "Status: I'm listening to you...";
-            };
+</div>
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                statusText.innerText = `You said: "${transcript}"`;
-                
-                // Send text to Dialogflow Messenger
-                const dfMessenger = document.querySelector('df-messenger');
-                dfMessenger.renderCustomText(transcript, false);
-                
-                // FIXED: Use a string 'true' instead of boolean true
-                dfMessenger.setAttribute('expand', 'true');
-            };
+<footer>
+    © 2026 ResRec — Smart Dining Recommendations
+</footer>
 
-            recognition.onerror = (event) => {
-                statusText.innerText = "Status: Error occurred in recognition: " + event.error;
-                micBtn.classList.remove('listening');
-            };
+<script>
 
-            recognition.onend = () => {
-                micBtn.classList.remove('listening');
-                micBtn.innerText = "Start Speaking 🎤";
-                // Only reset status if it hasn't shown an error
-                if(statusText.innerText.includes("listening")) {
-                    statusText.innerText = "Status: Ready";
-                }
-            };
-        }
-    </script>
+// =============================
+// CONFIGURATION
+// =============================
+
+// LOCAL (for testing)
+const API_URL = "http://127.0.0.1:8000/chat";
+
+// AFTER DEPLOYMENT CHANGE TO:
+// const API_URL = "https://your-render-url.onrender.com/chat";
+
+
+// =============================
+// UI FUNCTIONS
+// =============================
+
+const chatBox = document.getElementById("chat");
+const statusText = document.getElementById("status");
+
+function addMessage(sender, text, className) {
+    const msg = document.createElement("div");
+    msg.className = "message " + className;
+    msg.innerHTML = "<strong>" + sender + ":</strong> " + text;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+// =============================
+// TEXT TO SPEECH
+// =============================
+
+function speak(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-US";
+    speech.rate = 1;
+    window.speechSynthesis.speak(speech);
+}
+
+
+// =============================
+// SPEECH RECOGNITION
+// =============================
+
+const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+
+document.getElementById("micBtn").onclick = () => {
+    statusText.innerText = "Listening...";
+    recognition.start();
+};
+
+recognition.onresult = async function(event) {
+
+    const text = event.results[0][0].transcript;
+
+    addMessage("You", text, "user");
+    statusText.innerText = "Processing...";
+
+    const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: text })
+    });
+
+    const data = await response.json();
+
+    addMessage("ResRec", data.reply, "bot");
+    speak(data.reply);
+
+    statusText.innerText = "Click the microphone and speak again";
+};
+
+</script>
 
 </body>
 </html>
