@@ -1,15 +1,30 @@
 import os
 import uuid
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.cloud import dialogflow_v2 as dialogflow
 
 
-# -------------------------------
-# Dialogflow Setup
-# -------------------------------
+# =====================================================
+# GOOGLE CREDENTIALS (RENDER SAFE)
+# =====================================================
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "hotel-booking-gneg-252a22ec945f.json"
+creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+
+if not creds_json:
+    raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS_JSON not set")
+
+# Create credentials file at runtime
+with open("credentials.json", "w") as f:
+    f.write(creds_json)
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
+
+
+# =====================================================
+# DIALOGFLOW SETUP
+# =====================================================
 
 PROJECT_ID = "hotel-booking-gneg"
 
@@ -23,16 +38,29 @@ session = session_client.session_path(
 )
 
 
-# -------------------------------
-# FastAPI App
-# -------------------------------
+# =====================================================
+# FASTAPI SETUP
+# =====================================================
 
 app = FastAPI()
+
+# Allow frontend requests (CORS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Message(BaseModel):
     message: str
 
+
+# =====================================================
+# DIALOGFLOW FUNCTION
+# =====================================================
 
 def detect_intent(text):
     text_input = dialogflow.TextInput(
@@ -51,6 +79,10 @@ def detect_intent(text):
 
     return response.query_result.fulfillment_text
 
+
+# =====================================================
+# API ENDPOINT
+# =====================================================
 
 @app.post("/chat")
 def chat(msg: Message):
