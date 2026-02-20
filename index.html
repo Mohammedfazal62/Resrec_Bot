@@ -164,34 +164,69 @@ const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const recognition = new SpeechRecognition();
+
 recognition.lang = "en-US";
+recognition.interimResults = false;
+recognition.continuous = false;
+
+let isListening = false;
 
 document.getElementById("micBtn").onclick = () => {
+
+    if (isListening) {
+        recognition.stop();
+        return;
+    }
+
     statusText.innerText = "Listening...";
     recognition.start();
+    isListening = true;
 };
+
 
 recognition.onresult = async function(event) {
 
     const text = event.results[0][0].transcript;
 
+    recognition.stop();
+    isListening = false;
+
     addMessage("You", text, "user");
     statusText.innerText = "Processing...";
 
-    const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ message: text })
-    });
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message: text })
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    addMessage("ResRec", data.reply, "bot");
-    speak(data.reply);
+        addMessage("ResRec", data.reply, "bot");
+        speak(data.reply);
 
-    statusText.innerText = "Click the microphone and speak again";
+        statusText.innerText = "Click the microphone and speak again";
+
+    } catch (error) {
+        console.error("API Error:", error);
+        statusText.innerText = "Server error. Try again.";
+    }
+};
+
+
+recognition.onerror = function(event) {
+    console.error("Speech Recognition Error:", event.error);
+    statusText.innerText = "Speech error: " + event.error;
+    recognition.stop();
+    isListening = false;
+};
+
+
+recognition.onend = function() {
+    isListening = false;
 };
 
 </script>
