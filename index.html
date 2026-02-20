@@ -148,13 +148,37 @@ function addMessage(sender, text, className) {
 // TEXT TO SPEECH
 // =============================
 
-function speak(text) {
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "en-US";
-    speech.rate = 1;
-    window.speechSynthesis.speak(speech);
-}
+// Ensure voices are loaded properly
+window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+};
 
+function speak(text) {
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+
+    const voices = window.speechSynthesis.getVoices();
+
+    // Try selecting a premium female voice
+    const femaleVoice =
+        voices.find(v => v.name.includes("Google UK English Female")) ||
+        voices.find(v => v.name.includes("Google US English")) ||
+        voices.find(v => v.name.includes("Samantha")) ||
+        voices.find(v => v.name.includes("Victoria")) ||
+        voices.find(v => v.name.toLowerCase().includes("female"));
+
+    if (femaleVoice) {
+        utterance.voice = femaleVoice;
+    }
+
+    // Make it sound softer and more elegant
+    utterance.rate = 0.95;   // slightly slower
+    utterance.pitch = 1.1;   // warmer feminine tone
+    utterance.volume = 1;
+
+    window.speechSynthesis.speak(utterance);
+}
 
 // =============================
 // SPEECH RECOGNITION
